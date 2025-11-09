@@ -20,25 +20,70 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Main endpoint - process 3 numbers, return 2
-app.post('/process-numbers', (req, res) => {
+// MCP Tools List endpoint
+app.get('/tools', (req, res) => {
+  res.json({
+    tools: [
+      {
+        name: "process_numbers",
+        description: "Takes 3 numbers and returns the first 2 numbers",
+        inputSchema: {
+          type: "object",
+          properties: {
+            num1: {
+              type: "number",
+              description: "First number"
+            },
+            num2: {
+              type: "number",
+              description: "Second number"
+            },
+            num3: {
+              type: "number",
+              description: "Third number (will be ignored)"
+            }
+          },
+          required: ["num1", "num2", "num3"]
+        }
+      }
+    ]
+  });
+});
+
+// MCP Tool Call endpoint
+app.post('/tools/call', (req, res) => {
   try {
-    const { num1, num2, num3 } = req.body;
+    const { name, arguments: args } = req.body;
+
+    if (name !== 'process_numbers') {
+      return res.status(400).json({
+        error: 'Unknown tool',
+        message: `Tool '${name}' not found`
+      });
+    }
+
+    const { num1, num2, num3 } = args;
 
     // Validate inputs
     if (typeof num1 !== 'number' || typeof num2 !== 'number' || typeof num3 !== 'number') {
       return res.status(400).json({
-        error: 'All three inputs must be numbers',
+        error: 'Invalid arguments',
+        message: 'All three inputs must be numbers',
         received: { num1, num2, num3 }
       });
     }
 
     // Return only the first 2 numbers
     res.json({
-      result: [num1, num2],
-      message: `Received 3 numbers (${num1}, ${num2}, ${num3}), returning first 2`,
-      input: { num1, num2, num3 },
-      output: [num1, num2]
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            result: [num1, num2],
+            message: `Received 3 numbers (${num1}, ${num2}, ${num3}), returning first 2: [${num1}, ${num2}]`
+          }, null, 2)
+        }
+      ]
     });
   } catch (error) {
     res.status(500).json({
@@ -56,20 +101,26 @@ app.get('/', (req, res) => {
     description: 'Takes 3 numbers and returns the first 2',
     endpoints: {
       health: 'GET /health',
-      processNumbers: 'POST /process-numbers'
+      listTools: 'GET /tools',
+      callTool: 'POST /tools/call'
     },
     usage: {
-      method: 'POST',
-      url: '/process-numbers',
-      body: {
-        num1: 'number',
-        num2: 'number',
-        num3: 'number'
+      listTools: {
+        method: 'GET',
+        url: '/tools',
+        description: 'List all available tools'
       },
-      example: {
-        num1: 10,
-        num2: 20,
-        num3: 30
+      callTool: {
+        method: 'POST',
+        url: '/tools/call',
+        body: {
+          name: 'process_numbers',
+          arguments: {
+            num1: 10,
+            num2: 20,
+            num3: 30
+          }
+        }
       }
     }
   });
@@ -79,5 +130,6 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Simple Number MCP Server running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📍 Process numbers: http://localhost:${PORT}/process-numbers`);
+  console.log(`📍 List tools: http://localhost:${PORT}/tools`);
+  console.log(`📍 Call tool: http://localhost:${PORT}/tools/call`);
 });
