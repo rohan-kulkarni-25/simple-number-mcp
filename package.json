@@ -1,0 +1,16 @@
+{
+  "name": "simple-number-mcp",
+  "version": "1.0.0",
+  "description": "A simple MCP server that takes 3 numbers and returns 2",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["mcp", "model-context-protocol"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  }
+}
